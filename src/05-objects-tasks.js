@@ -20,8 +20,14 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea() {
+      return this.width * this.height;
+    },
+  };
 }
 
 
@@ -35,8 +41,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +57,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.setPrototypeOf(JSON.parse(json), proto);
 }
 
 
@@ -107,36 +113,75 @@ function fromJSON(/* proto, json */) {
  *  ).stringify()
  *    => 'div#main.container.draggable + table#data ~ tr:nth-of-type(even)   td:nth-of-type(even)'
  *
+ *
  *  For more examples see unit tests.
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  result: {},
+  selectorsOrder: ['element', 'id', 'class', 'attr', 'pseudoClass', 'pseudoElement'],
+
+  element(value) {
+    if (this.result.element) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+
+    if (Object.keys(this.result).length > 0) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+    return { ...this, result: { ...this.result, element: value } };
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    if (this.result.id) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+
+    const currentOrder = Object.keys(this.result);
+    if (currentOrder.length !== 0 && currentOrder[0] !== this.selectorsOrder[0]) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+    return { ...this, result: { ...this.result, id: `#${value}` } };
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.validator(2);
+    return { ...this, result: { ...this.result, class: [...(this.result.class ? this.result.class : []), `.${value}`] } };
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    this.validator(3);
+    return { ...this, result: { ...this.result, attr: [...(this.result.attr ? this.result.attr : []), `[${value}]`] } };
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    this.validator(4);
+    return { ...this, result: { ...this.result, pseudoClass: [...(this.result.pseudoClass ? this.result.pseudoClass : []), `:${value}`] } };
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    if (this.result.pseudoElement) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+
+    this.validator(5);
+    return { ...this, result: { ...this.result, pseudoElement: `::${value}` } };
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return { ...this, result: `${selector1.stringify()} ${combinator} ${selector2.stringify()}` };
+  },
+
+  stringify() {
+    return Object.values(this.result).reduce((a, b) => a.concat(b), []).join('');
+  },
+
+  validator(order) {
+    const currentOrder = Object.keys(this.result);
+    if (currentOrder.length !== 0
+      && this.selectorsOrder.indexOf(currentOrder[currentOrder.length - 1]) > order) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
   },
 };
 
