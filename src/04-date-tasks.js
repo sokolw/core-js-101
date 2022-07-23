@@ -94,10 +94,10 @@ function timeSpanToString(startDate, endDate) {
     seconds,
     milliseconds,
   ] = [
-    (resultDate.getHours() - 3).toString().padStart(2, '0'),
-    resultDate.getMinutes().toString().padStart(2, '0'),
-    resultDate.getSeconds().toString().padStart(2, '0'),
-    resultDate.getMilliseconds().toString().padStart(3, '0'),
+    (resultDate.getUTCHours()).toString().padStart(2, '0'),
+    resultDate.getUTCMinutes().toString().padStart(2, '0'),
+    resultDate.getUTCSeconds().toString().padStart(2, '0'),
+    resultDate.getUTCMilliseconds().toString().padStart(3, '0'),
   ];
   return `${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
